@@ -27,6 +27,8 @@ these buttons for our use.
 #include "Joystick.h"
 #include "uart.h"
 
+//Define Serial Baudrate
+#define BAUD 38400
 
 // Main entry point.
 int main(void) {
@@ -35,7 +37,10 @@ int main(void) {
 	// We'll then enable global interrupts for our use.
 	GlobalInterruptEnable();
 	// Once that's done, we'll enter an infinite loop.
-	
+
+
+	uart_init(BAUD);
+
 	for (;;)
 	{
 		// We need to run our task to process and deliver data for our IN and OUT endpoints.
@@ -44,8 +49,7 @@ int main(void) {
 		USB_USBTask();
 	}
 }
-//Define Serial Baudrate
-#define BAUD 38400
+
 // Configures hardware and peripherals, such as the USB peripherals.
 void SetupHardware(void) {
 	// We need to disable watchdog if enabled by bootloader/fuses.
@@ -54,8 +58,8 @@ void SetupHardware(void) {
 
 	// We need to disable clock division before initializing the USB hardware.
 	clock_prescale_set(clock_div_1);
+	// We can then initialize our hardware and peripherals, including the USB stack.
 
-	uart_init(BAUD);
 	// The USB stack should be initialized last.
 	USB_Init();
 }
@@ -75,10 +79,8 @@ void EVENT_USB_Device_ConfigurationChanged(void) {
 	bool ConfigSuccess = true;
 
 	// We setup the HID report endpoints.
-	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_OUT_EPADDR, 
-		EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
-	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_IN_EPADDR, 
-		EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_OUT_EPADDR, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
+	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_IN_EPADDR, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
 
 	// We can read ConfigSuccess to indicate a success or failure at this point.
 }
@@ -107,8 +109,7 @@ void HID_Task(void) {
 			// We'll create a place to store our data received from the host.
 			USB_JoystickReport_Output_t JoystickOutputData;
 			// We'll then take in that data, setting it up in our storage.
-			while(Endpoint_Read_Stream_LE(&JoystickOutputData, 
-				sizeof(JoystickOutputData), NULL) != ENDPOINT_RWSTREAM_NoError);
+			while(Endpoint_Read_Stream_LE(&JoystickOutputData, sizeof(JoystickOutputData), NULL) != ENDPOINT_RWSTREAM_NoError);
 			// At this point, we can react to this data.
 
 			// However, since we're not doing anything with this data, we abandon it.
@@ -127,23 +128,11 @@ void HID_Task(void) {
 		// We'll then populate this report with what we want to send to the host.
 		GetNextReport(&JoystickInputData);
 		// Once populated, we can output this data to the host. We do this by first writing the data to the control stream.
-		while(Endpoint_Write_Stream_LE(&JoystickInputData, 
-			sizeof(JoystickInputData), NULL) != ENDPOINT_RWSTREAM_NoError);
+		while(Endpoint_Write_Stream_LE(&JoystickInputData, sizeof(JoystickInputData), NULL) != ENDPOINT_RWSTREAM_NoError);
 		// We then send an IN packet on this endpoint.
 		Endpoint_ClearIN();
 	}
 }
-
-typedef enum {
-	JOY_LX,
-	JOY_LY,
-	JOY_RX,
-	JOY_RY,
-	HAT,
-	JOY_BUTTON1,
-	JOY_BUTTON2,
-	DONE
-} SerData_t;
 
 #define dataLength 7
 
@@ -151,91 +140,60 @@ typedef enum {
 int echoes = 0;
 USB_JoystickReport_Input_t last_report;
 
-int report_count = 0;
 
-bool controllerSync = false;
 // Prepare the next report for the host.
 void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 	// Prepare an empty report
 	memset(ReportData, 0, sizeof(USB_JoystickReport_Input_t));
-	ReportData->LX = STICK_CENTER;
-	ReportData->LY = STICK_CENTER;
-	ReportData->RX = STICK_CENTER;
-	ReportData->RY = STICK_CENTER;
-	ReportData->HAT = HAT_CENTER;
- 	/*
+	memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
 	if (echoes > 0)
 	{
+	    ReportData->Button |= echoes;
 		memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
 		echoes--;
 		return;
 	}
-	*/
-	
-	// States and moves management
-	if(!controllerSync) {
-		// Repeat ECHOES times the last report
-		if (report_count > 100)
-			{
-				_delay_ms(100);
-				report_count = 0;
-				controllerSync = true;
-			}
-			else if (report_count == 25 || report_count == 50)
-			{
-				ReportData->Button |= SWITCH_L | SWITCH_R;
-			}
-			else if (report_count == 75 || report_count == 100)
-			{
-				ReportData->Button |= SWITCH_A;
-			}
-			report_count++;
 
-	} else{
-		if(uart_available() >= dataLength){
-			SerData_t cur_t = JOY_LX;
-			while(cur_t != DONE){
-				switch(cur_t){
-					case JOY_LX:
-						ReportData->LX = uart_getchar();
-						cur_t++;//to JOY_LY
-						break;
-					case JOY_LY:
-						ReportData->LY = uart_getchar();
-						cur_t++;//to JOY_RX;
-						break;
-					case JOY_RX:
-						ReportData->RX = uart_getchar();
-						cur_t++;//to JOY_RY
-						break;
-					case JOY_RY:
-						ReportData->RY = uart_getchar();
-						cur_t++;//to HAT;
-						break;
-					case HAT:
-						ReportData->HAT = uart_getchar();
-						cur_t++;//to JOY_BUTTON1
-						break;
-					case JOY_BUTTON1:
-						ReportData->Button |= uart_getchar();
-						cur_t++;//to JOY_BUTTON2
-						break;
-					case JOY_BUTTON2:
-						ReportData->Button |= (uart_getchar()<<8);
-						cur_t++; //to DONE
-						break;
-					case DONE:
-						break;
-				}
-			}
-			uart_putchar('\n');
-		}else{
-			memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
-			return;
-		}
+	if(uart_available() >= dataLength){
+	    int i = 0;
+	    while(i < dataLength - 1){
+		    uint8_t c = uart_getchar();
+    		switch(i){
+    			case 0:
+    				ReportData->LX = c;
+    				uart_putchar(ReportData->LX + 1);
+	    			break;
+		    	case 1:
+		    		ReportData->LY = c;
+		    		uart_putchar(ReportData->LY + 1);
+		    		break;
+		    	case 2:
+		    		ReportData->RX = c;
+		    		uart_putchar(ReportData->RX + 1);
+    				break;
+    			case 3:
+    				ReportData->RY = c;
+    				uart_putchar(ReportData->RY + 1);
+    				break;
+    			case 4:
+    				ReportData->HAT = c;
+    				uart_putchar(ReportData->HAT + 1);
+    				break;
+    			case 5: ;
+    			    uint8_t c2 = uart_getchar();
+    				ReportData->Button = ((uint16_t)c2 << 8) | c;
+    				uart_putchar(ReportData->Button + 1);
+    				uart_putchar(ReportData->Button>>8 + 1);
+    				break;
+    			case 6:
+    				break;
+    		}
+
+    		i++;
+    	}
+	}else{
+	    ReportData->Button |= SWITCH_A;
 	}
-
-	_delay_ms(1000/30);
 	// Prepare to echo this report
 	memcpy(&last_report, ReportData, sizeof(USB_JoystickReport_Input_t));
 	echoes = ECHOES;
