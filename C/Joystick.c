@@ -134,68 +134,88 @@ void HID_Task(void) {
 	}
 }
 
-#define dataLength 7
+typedef enum {
+	SYNC_CONTROLLER,
+	EXTERNAL_INPUT
+} State_t;
+State_t state = SYNC_CONTROLLER;
+
+#define DATA_LENGTH 7
 
 #define ECHOES 2
 int echoes = 0;
 USB_JoystickReport_Input_t last_report;
+
+int report_count = 0;
 
 
 // Prepare the next report for the host.
 void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 	// Prepare an empty report
 	memset(ReportData, 0, sizeof(USB_JoystickReport_Input_t));
-	memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
-	if (echoes > 0)
-	{
-	    ReportData->Button |= echoes;
-		memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
-		echoes--;
-		return;
-	}
+	ReportData->LX = STICK_CENTER;
+	ReportData->LY = STICK_CENTER;
+	ReportData->RX = STICK_CENTER;
+	ReportData->RY = STICK_CENTER;
+	ReportData->HAT = HAT_CENTER;
+	// Repeat ECHOES times the last report
 
-	if(uart_available() >= dataLength){
+	// States and moves management
+	switch (state)
+	{
+		case SYNC_CONTROLLER:
+			if (report_count > 100)
+			{
+				report_count = 0;
+				state = EXTERNAL_INPUT;
+			}
+			else if (report_count == 25 || report_count == 50)
+			{
+				ReportData->Button |= SWITCH_L | SWITCH_R;
+			}
+			else if (report_count == 75 || report_count == 100)
+			{
+				ReportData->Button |= SWITCH_A;
+			}
+			report_count++;
+			break;
+		case EXTERNAL_INPUT:
+			memcpy(ReportData, &last_report, sizeof(USB_JoystickReport_Input_t));
+			report_count++;
+			break;
+	}
+	if(uart_available() >= DATA_LENGTH){
 	    int i = 0;
-	    while(i < dataLength - 1){
+	    while(i < DATA_LENGTH - 1){;
 		    uint8_t c = uart_getchar();
     		switch(i){
     			case 0:
     				ReportData->LX = c;
-    				uart_putchar(ReportData->LX + 1);
 	    			break;
 		    	case 1:
 		    		ReportData->LY = c;
-		    		uart_putchar(ReportData->LY + 1);
 		    		break;
 		    	case 2:
 		    		ReportData->RX = c;
-		    		uart_putchar(ReportData->RX + 1);
     				break;
     			case 3:
     				ReportData->RY = c;
-    				uart_putchar(ReportData->RY + 1);
     				break;
     			case 4:
     				ReportData->HAT = c;
-    				uart_putchar(ReportData->HAT + 1);
     				break;
     			case 5: ;
     			    uint8_t c2 = uart_getchar();
     				ReportData->Button = ((uint16_t)c2 << 8) | c;
-    				uart_putchar(ReportData->Button + 1);
-    				uart_putchar(ReportData->Button>>8 + 1);
     				break;
     			case 6:
-    				break;
+					break;
     		}
-
     		i++;
+			uart_putchar(i);
     	}
-	}else{
-	    ReportData->Button |= SWITCH_A;
 	}
 	// Prepare to echo this report
 	memcpy(&last_report, ReportData, sizeof(USB_JoystickReport_Input_t));
-	echoes = ECHOES;
-	
+	_delay_ms(1000/30);
 }
