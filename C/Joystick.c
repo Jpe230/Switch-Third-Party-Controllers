@@ -188,6 +188,7 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
 	    int i = 0;
 	    while(i < DATA_LENGTH - 1){;
 		    uint8_t c = uart_getchar();
+			uart_putchar(c);
     		switch(i){
     			case 0:
     				ReportData->LX = c;
@@ -206,16 +207,17 @@ void GetNextReport(USB_JoystickReport_Input_t* const ReportData) {
     				break;
     			case 5: ;
     			    uint8_t c2 = uart_getchar();
+					uart_putchar(c2);
     				ReportData->Button = ((uint16_t)c2 << 8) | c;
     				break;
     			case 6:
 					break;
     		}
+			
     		i++;
-			uart_putchar(i);
     	}
+		
 	}
 	// Prepare to echo this report
 	memcpy(&last_report, ReportData, sizeof(USB_JoystickReport_Input_t));
-	_delay_ms(1000/30);
 }

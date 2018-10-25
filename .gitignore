@@ -24,3 +24,11 @@ Test/makeAndClean.sh
 Test/Makefile
 Test/uart.c
 Test/uart.h
+.vscode/c_cpp_properties.json
+Python/__pycache__/maths.cpython-36.pyc
+Python/__pycache__/payload.cpython-36.pyc
+Python/test.py
+C/._.DS_Store
+C/._Joystick.c
+C/._Joystick.h
+Python/serialMain.py
