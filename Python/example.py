@@ -1,7 +1,6 @@
 import sys
 import time
 
-import cv2
 import pygame
 
 from maths import cvtFrameToTkImg
@@ -27,10 +26,10 @@ pygame.init()
 
 screen = pygame.display.set_mode(winDim)
 
-myFont = pygame.font.SysFont("Arial", 16)
+myFont = pygame.font.SysFont("Arial", 16, bold=True)
 
 textColor = pygame.Color(255, 255, 255)
-screenFillColor = pygame.Color(255, 0, 0)
+screenFillColor = pygame.Color(0, 0, 0)
 
 keysDown = []
 
@@ -71,7 +70,7 @@ with ControllerApplication() as conApp:
 					keysDown.remove(keyStr)
 
 		inMan.processInputs(conApp.payload, keysDown, 
-				(mouseDelta[0] * mouseSens[0], mouseDelta[1] * mouseSens[1]))
+				(mouseDelta[0] * mouseSens[0], -mouseDelta[1] * mouseSens[1]))
 
 		if lockMouse and pygame.mouse.get_focused():
 				pygame.mouse.set_pos(winDim[0] / 2, winDim[1] / 2)

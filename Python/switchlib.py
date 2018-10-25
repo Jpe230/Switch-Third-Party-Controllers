@@ -1,24 +1,9 @@
 import seriallib
-import pygame
+import constants
 
 class InputManager:
-	validButtonValues = ["-LX", "+LX", "-LY", "+LY",
-						"-RX", "+RX", "-RY", "+RY",
-						"DUP", "DDOWN", "DLEFT", "DRIGHT",
-						"A", "B", "Y", "X", 
-						"L", "R", "ZL", "ZR",
-						"L_CLICK", "R_CLICK",
-						"HOME", "CAPTURE", "PLUS", "MINUS"]
-	pygame.init()
-	pygameKeyDict = {pygame.key.name(i).replace(" ", ""): i 
-						for i in range(0, 317) 
-						if pygame.key.name(i) != "unknown key"}
-	pygameKeyDict.update({f"m{i}": f"m{i}" for i in range(1,9)})
-	pygameKeyDict.update({"mx":"mx", "my":"my"})
-	pygame.quit()
-
 	def __init__(self, configCSVPath):
-		self.mappingDict = {button: [] for button in self.validButtonValues}
+		self.mappingDict = {button: [] for button in constants.validButtonValues}
 		f = open(configCSVPath, "r")
 		f.readline()
 		for line in f.readlines():
@@ -27,14 +12,14 @@ class InputManager:
 				continue
 			
 			button = seperatedLine[0].upper()
-			if not button in self.validButtonValues:
+			if not button in constants.validButtonValues:
 				print(f"Invalid Button Name ({button})")
 				continue
 			
 			keys = seperatedLine[1:]
 			for key in keys:
-				if key.lower() in self.pygameKeyDict:
-					self.mappingDict[button].append(self.pygameKeyDict[key])
+				if key.lower() in constants.nameKeyValDict:
+					self.mappingDict[button].append(constants.nameKeyValDict[key])
 				else:
 					print(f"Received incorrect key value ({key}). Please refer to keys.txt for list of valid keys")
 		print(self.mappingDict)
@@ -53,8 +38,8 @@ class InputManager:
 					payload.setRightY(128 + mouseDiff[1])
 
 			if any(key in keysDown for key in mappedKeys):
-				if button in self.validButtonValues[12:]:
-					payload.applyButtons(1 << (self.validButtonValues.index(button) - 12))
+				if button in constants.validButtonValues[12:]:
+					payload.applyButtons(1 << (constants.validButtonValues.index(button) - 12))
 
 				elif button == "-LX":
 					payload.setLeftX(0)
@@ -76,14 +61,15 @@ class InputManager:
 				elif button == "+RY":
 					payload.setRightX(255)
 
-				elif button == "DUP":
-					dPadDir[1] += 1
-				elif button == "DDOWN":
-					dPadDir[1] += -1
 				elif button == "DLEFT":
 					dPadDir[0] += -1
 				elif button == "DRIGHT":
 					dPadDir[0] += 1
+				elif button == "DUP":
+					dPadDir[1] += -1
+				elif button == "DDOWN":
+					dPadDir[1] += 1
+				
 		
 		payload.setHatFromVector(dPadDir[0], dPadDir[1])
 		return payload

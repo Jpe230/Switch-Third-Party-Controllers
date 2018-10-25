@@ -172,7 +172,7 @@ class Payload:
             [7,0,1],
             [6,8,2],
             [5,4,3]]
-        self.hat = dPadList[x + 1][y + 1]
+        self.hat = dPadList[y + 1][x + 1]
 
     def applyButtons(self, *args: Button) -> None:
         if not len(args) > 0:
