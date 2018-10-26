@@ -7,6 +7,8 @@ Required libaries for helper classes: `pyserial`
 
 Required libraries for example.py: `pygame`
 
+Components used in this project: `Teensy 2.0++`, `USB to UART bridge`
+
 Inspired by (and forked from) ShinyQuagsire's Splat printer (https://github.com/shinyquagsire23/Switch-Fightstick) and PiManRules' Super Mario Odyssey bots (https://www.youtube.com/watch?v=hu3HEwc6Pwk&list=PLRqz09NxzVqYLX_1F3xB01hgpDFpSxUEi)
 
 ## Writing Your Own Automated Programs
