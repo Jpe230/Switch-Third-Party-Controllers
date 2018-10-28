@@ -32,3 +32,5 @@ C/._.DS_Store
 C/._Joystick.c
 C/._Joystick.h
 Python/serialMain.py
+venv/
+Python/.idea

@@ -1,6 +1,7 @@
 import seriallib
 import constants
 
+
 class InputManager:
 	def __init__(self, configCSVPath):
 		self.mappingDict = {button: [] for button in constants.validButtonValues}
@@ -69,49 +70,6 @@ class InputManager:
 					dPadDir[1] += -1
 				elif button == "DDOWN":
 					dPadDir[1] += 1
-				
-		
+
 		payload.setHatFromVector(dPadDir[0], dPadDir[1])
 		return payload
-
-
-
-
-
-class ControllerApplication:
-	def __init__(self, serialBaud=38400):
-		self.man = seriallib.SerialManager(serialBaud)
-		self.verifySerialConnection()
-		self.payload = seriallib.Payload()
-		self.frame = 0
-
-	def __enter__(self):
-		return self
-
-	def verifySerialConnection(self):
-		if not len(self.man.getPortList()) > 0:
-			raise LookupError("Unable to detect a connected serial device")
-		
-		print(self.man.getPortListStr())
-		while True:
-			portIndex = input("Select a port:")
-			if not str.isdecimal(portIndex):
-				print(f"Value {portIndex} is not an integer")
-				continue
-			if self.man.createSerialConnection(int(portIndex)):
-				break
-			print(f"Value {portIndex} was not valid.")
-
-	def didReceiveFeedback(self):
-		return self.man.ser.in_waiting > 0
-
-	def submitData(self):
-		self.man.writeByteArrayToSer(self.payload.asByteArray())
-
-	def update(self):
-		self.man.ser.read_all()
-		self.submitData()
-		
-	def __exit__(self, exc_type, exc_value, traceback):
-		self.man.__exit__(exc_type, exc_value, traceback)
-

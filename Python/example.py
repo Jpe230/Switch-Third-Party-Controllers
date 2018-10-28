@@ -2,25 +2,42 @@ import sys
 import time
 
 import pygame
+from serial.tools import list_ports
 
-from maths import cvtFrameToTkImg
-from switchlib import ControllerApplication, InputManager
-from seriallib import Button, HAT
+from switchlib import InputManager
+from seriallib import SerialManager, Payload
 
 BAUD = 38400
 
 UPDATES_PER_SECOND = 60
+
+payload = Payload()
+
+def getPortFromUser():
+	portList = list(list_ports.grep(""))
+	if len(portList) == 0:
+		raise LookupError("Unable to detect Serial Device.")
+	indexPortListString = [f"Index: {index}, Port: {port.device}, Description: {port.description}"
+						   for index, port in enumerate(portList)]
+	print(indexPortListString)
+	while True:
+		ind = input("What port index should be used? ")
+		if not str.isdigit(ind):
+			print(f"Value given is not a digit")
+		elif not (0 <= int(ind) < len(portList)):
+			print("Value given is not an index in the list")
+		else:
+			return portList[int(ind)].device
+
+
+
+
 winDim = (640, 480)
 lockMouse = False
 mouseSens = (2, 2)
 mouseDelta = (0, 0)
 
 inMan = InputManager("controllerMapping.csv")
-
-def cvImageToPygame(image):
-    """Convert cvimage into a pygame image"""
-    return pygame.image.frombuffer(image.tostring(), image.shape[1::-1],
-                                   "RGB")
 
 pygame.init()
 
@@ -33,19 +50,19 @@ screenFillColor = pygame.Color(0, 0, 0)
 
 keysDown = []
 
-with ControllerApplication() as conApp:
+with SerialManager(getPortFromUser(), BAUD) as serialMan:
 	while True:
-		conApp.payload.resetAllInputs()
+		payload.resetAllInputs()
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				pygame.quit()
-				conApp.man.ser.flush()
+				serialMan.flush()
 				sys.exit()
 
 			elif event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_ESCAPE:
 					pygame.quit()
-					conApp.man.ser.flush()
+					serialMan.flush()
 					sys.exit()
 				elif event.key == pygame.K_TAB:
 					lockMouse = not lockMouse
@@ -69,22 +86,19 @@ with ControllerApplication() as conApp:
 				if keyStr in keysDown:
 					keysDown.remove(keyStr)
 
-		inMan.processInputs(conApp.payload, keysDown, 
+		inMan.processInputs(payload, keysDown,
 				(mouseDelta[0] * mouseSens[0], -mouseDelta[1] * mouseSens[1]))
 
 		if lockMouse and pygame.mouse.get_focused():
 				pygame.mouse.set_pos(winDim[0] / 2, winDim[1] / 2)
 				pygame.event.get(pygame.MOUSEMOTION)
 		mouseDelta = (0, 0)
-		
-		
-		
-		
+
 		screen.fill(screenFillColor)
 
-		screen.blit(myFont.render(f"Sending:{str(conApp.payload)}", True, textColor), (0,0))
-		screen.blit(myFont.render(f"Receiving:{conApp.man.readPortAsIntArr()}", True, textColor), (0,20))
+		screen.blit(myFont.render(f"Sending:{str(payload)}", True, textColor), (0,0))
+		screen.blit(myFont.render(f"Receiving:{serialMan.readPortAsIntArr()}", True, textColor), (0,20))
 
 		pygame.display.flip()
-		conApp.update()
+		serialMan.write(payload.asByteArray())
 		time.sleep(1/UPDATES_PER_SECOND)
