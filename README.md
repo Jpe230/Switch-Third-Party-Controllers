@@ -14,7 +14,7 @@ Components used in this project:
 
 This code can be easily modified to be used in a Raspberry Pi with any compatible GamePad. You can even modified the code to connect the GPIO pins directly into the RX/TX pins in the arduino
 
-## About
+### About
 This project is meant to be used as an adapter for any third party controller for the Switch. This could be the basis of a DIY Gamecube Adapter for the Nintendo Switch.
 
 
