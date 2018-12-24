@@ -1,27 +1,15 @@
 button,key1,key2,key3
--LX, a
-+LX, d
--LY, w
-+LY, s
--RX, mx
-+RX, mx
--RY, my
-+RY, my
-A, space
-B, left shift
-Y
-X
-L
+A, 0
+B, 1
+Y, 3
+X, 2 
+L, 4
 R
-ZL, m3
-ZR, m1
-L_CLICK, m2
-R_CLICK
-DUP, up
-DDOWN, down
-DLEFT, left
-DRIGHT, right
-HOME, f1
-CAPTURE, f2
-PLUS, +
-MINUS, -
+ZL
+ZR, 5
+L_CLICK, 8
+R_CLICK, 9
+HOME
+CAPTURE
+PLUS, 7
+MINUS, 6

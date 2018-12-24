@@ -25,51 +25,22 @@ class InputManager:
 					print(f"Received incorrect key value ({key}). Please refer to keys.txt for list of valid keys")
 		print(self.mappingDict)
 
-	def processInputs(self, payload: seriallib.Payload,  keysDown: list, mouseDiff: tuple) -> seriallib.Payload:
+	def processInputs(self, payload: seriallib.Payload,  keysDown: list, leftJoy: list, rightJoy: list, hat: list) -> seriallib.Payload:
 		dPadDir = [0, 0]
-		for button, mappedKeys in self.mappingDict.items():
-			if "mx" in mappedKeys or "my" in mappedKeys:
-				if button in ["-LX","+LX"]:
-					payload.setLeftX(128 + mouseDiff[0])
-				elif button in ["-LY","+LY"]:
-					payload.setLeftY(128 + mouseDiff[1])
-				elif button in ["-RX","+RX"]:
-					payload.setRightX(128 + mouseDiff[0])
-				elif button in ["-RY","+RY"]:
-					payload.setRightY(128 + mouseDiff[1])
 
+		payload.setLeftX(leftJoy[0])
+		payload.setLeftY(leftJoy[1])
+		payload.setRightX(rightJoy[0])
+		payload.setRightY(rightJoy[1])
+
+		dPadDir[0] = hat[0]
+		dPadDir[1] = hat[1] * -1
+
+		for button, mappedKeys in self.mappingDict.items():
 			if any(key in keysDown for key in mappedKeys):
 				if button in constants.validButtonValues[12:]:
 					payload.applyButtons(1 << (constants.validButtonValues.index(button) - 12))
-
-				elif button == "-LX":
-					payload.setLeftX(0)
-				elif button == "+LX":
-					payload.setLeftX(255)
-
-				elif button == "-LY":
-					payload.setLeftY(0)
-				elif button == "+LY":
-					payload.setLeftY(255)
-
-				elif button == "-RX":
-					payload.setRightX(0)
-				elif button == "+RX":
-					payload.setRightX(255)
-
-				elif button == "-RY":
-					payload.setRightX(0)
-				elif button == "+RY":
-					payload.setRightX(255)
-
-				elif button == "DLEFT":
-					dPadDir[0] += -1
-				elif button == "DRIGHT":
-					dPadDir[0] += 1
-				elif button == "DUP":
-					dPadDir[1] += -1
-				elif button == "DDOWN":
-					dPadDir[1] += 1
-
+			
+			
 		payload.setHatFromVector(dPadDir[0], dPadDir[1])
 		return payload
