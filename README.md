@@ -8,9 +8,9 @@ Required libaries for helper classes: `pyserial`
 Required libraries for example.py: `pygame`
 
 Components used in this project:
-	-LUFA compatible microcontroller (Teensy 2.0, Arduino UNO, etc)
-	-USB to UART, you can use an Arduino UNO with Reset connected to Ground to act as an adapter.
-	-Xbox One Controller
+	- LUFA compatible microcontroller (Teensy 2.0, Arduino UNO, etc)
+	- USB to UART, you can use an Arduino UNO with Reset connected to Ground to act as an adapter.
+	- Xbox One Controller
 
 This code can be easily modified to be used in a Raspberry Pi with any compatible GamePad. You can even modified the code to connect the GPIO pins directly into the RX/TX pins in the arduino
 
