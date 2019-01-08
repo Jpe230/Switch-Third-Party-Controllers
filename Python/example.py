@@ -72,7 +72,8 @@ with SerialManager(getPortFromUser(), BAUD) as serialMan:
 
 	
 		screen.fill(WHITE)
-
+		joystick = pygame.joystick.Joystick(0)
+        	joystick.init()
 		LJX = ((joystick.get_axis(0) + 1.0) / 2.0)
 		LJY = ((joystick.get_axis(1) + 1.0) / 2.0)
 		RJX = ((joystick.get_axis(3) + 1.0) / 2.0)
